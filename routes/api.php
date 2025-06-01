@@ -1,12 +1,9 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\AuthController;
-
-Route::get('/', function () {
-    return view('welcome');
-});
 
 // 🔓 Route publik (tanpa auth)
 Route::post('/dokters/register', [DokterController::class, 'store']); // register dokter
