@@ -6,7 +6,7 @@
     <title>@yield('title', 'Sistem Booking Dokter')</title>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
-<body class="bg-gray-100 text-gray-900">
+<body>
 
     <nav class="bg-white shadow p-4 mb-6">
         <div class="container mx-auto">

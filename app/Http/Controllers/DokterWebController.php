@@ -27,18 +27,17 @@ class DokterWebController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string',
             'username' => 'required|string|unique:dokters',
-            'email' => 'nullable|email',
+            'email' => 'required|email',
             'password' => 'required|string|min:6',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+        $validated['password'] = \Hash::make($validated['password']);
         $validated['role'] = 'dokter';
 
-        Dokter::create($validated);
+        \App\Models\Dokter::create($validated);
 
         return redirect()->route('dokter.login.form')->with('success', 'Registrasi berhasil!');
     }
-
     // Detail Dokter
     public function show($id)
     {
@@ -61,7 +60,7 @@ class DokterWebController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string',
             'username' => 'required|string|unique:dokters,username,' . $dokter->id,
-            'email' => 'nullable|email',
+            'email' => 'required|email',
             'password' => 'nullable|string|min:6',
         ]);
 
@@ -85,7 +84,6 @@ class DokterWebController extends Controller
         return redirect()->route('dokter.index')->with('success', 'Dokter berhasil dihapus!');
     }
 
-    // login dokter
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -93,20 +91,23 @@ class DokterWebController extends Controller
             'password' => 'required|string',
         ]);
 
-        $dokter = Dokter::where('username', $credentials['username'])->first();
+        $dokter = \App\Models\Dokter::where('username', $credentials['username'])->first();
 
-        if (!$dokter || !Hash::check($credentials['password'], $dokter->password)) {
+        if (!$dokter || !\Hash::check($credentials['password'], $dokter->password)) {
             return back()->withErrors(['username' => 'Username atau password salah.']);
         }
 
-        session(['dokter_id' => $dokter->id]);
+        session([
+            'dokter_id' => $dokter->id,
+            'dokter_nama' => $dokter->nama
+        ]);
+
         return redirect()->route('dashboard.dokter');
     }
 
-    // logout dokter
     public function logout()
     {
-        session()->forget('dokter_id');
+        session()->forget(['dokter_id', 'dokter_nama']);
         return redirect()->route('dokter.login.form')->with('success', 'Logout berhasil!');
     }
 }
