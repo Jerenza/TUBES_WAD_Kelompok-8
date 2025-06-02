@@ -16,4 +16,6 @@ class Dokter extends Model
         'password',
         'role',
     ];
+
+    public $timestamps = false;
 }

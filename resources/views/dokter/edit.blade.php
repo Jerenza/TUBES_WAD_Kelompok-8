@@ -1,9 +1,8 @@
-@extends('Layout.app')
+@extends('layouts.app')
 
 @section('content')
 <div class="max-w-md mx-auto p-6">
     <h2 class="text-xl font-bold mb-4">Edit Dokter</h2>
-
     <form action="{{ route('dokter.update', $dokter->id) }}" method="POST">
         @csrf @method('PUT')
         <input type="text" name="nama" value="{{ $dokter->nama }}" class="w-full mb-3 p-2 border rounded">
