@@ -12,5 +12,6 @@ class Staff extends Model
         'email',
         'password',
         'role',
+        
     ];
 }

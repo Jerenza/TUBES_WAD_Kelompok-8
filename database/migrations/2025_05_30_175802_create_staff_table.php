@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string(column: 'email')->nullable();
             $table->string('password');
             $table->string('role')->default('staff');
+            $table->timestamps();
         });
     }
 
