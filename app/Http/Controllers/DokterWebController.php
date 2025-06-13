@@ -8,13 +8,6 @@ use Illuminate\Support\Facades\Hash;
 
 class DokterWebController extends Controller
 {
-    // List Dokter
-    public function index()
-    {
-        $dokters = Dokter::all();
-        return view('dokter.index', compact('dokters'));
-    }
-
     // Tampilkan form registrasi dokter
     public function create()
     {
@@ -37,51 +30,6 @@ class DokterWebController extends Controller
         \App\Models\Dokter::create($validated);
 
         return redirect()->route('dokter.login.form')->with('success', 'Registrasi berhasil!');
-    }
-    // Detail Dokter
-    public function show($id)
-    {
-        $dokter = Dokter::findOrFail($id);
-        return view('dokter.show', compact('dokter'));
-    }
-
-    // Edit Dokter
-    public function edit($id)
-    {
-        $dokter = Dokter::findOrFail($id);
-        return view('dokter.edit', compact('dokter'));
-    }
-
-    // Update dokter
-    public function update(Request $request, $id)
-    {
-        $dokter = Dokter::findOrFail($id);
-
-        $validated = $request->validate([
-            'nama' => 'required|string',
-            'username' => 'required|string|unique:dokters,username,' . $dokter->id,
-            'email' => 'required|email',
-            'password' => 'nullable|string|min:6',
-        ]);
-
-        if ($request->filled('password')) {
-            $validated['password'] = Hash::make($request->password);
-        } else {
-            unset($validated['password']);
-        }
-
-        $dokter->update($validated);
-
-        return redirect()->route('dokter.show', $dokter->id)->with('success', 'Data dokter berhasil diupdate!');
-    }
-
-    // Hapus dokter
-    public function destroy($id)
-    {
-        $dokter = Dokter::findOrFail($id);
-        $dokter->delete();
-
-        return redirect()->route('dokter.index')->with('success', 'Dokter berhasil dihapus!');
     }
 
     public function login(Request $request)
@@ -109,5 +57,26 @@ class DokterWebController extends Controller
     {
         session()->forget(['dokter_id', 'dokter_nama']);
         return redirect()->route('dokter.login.form')->with('success', 'Logout berhasil!');
+    }
+
+    public function dashboard(Request $request)
+    {
+        $menu = $request->query('menu', 'home');
+        $dokter = \App\Models\Dokter::find(session('dokter_id'));
+        $reservasi = collect();
+        $pemeriksaan = collect();
+        if ($menu === 'jadwal') {
+            $reservasi = \App\Models\Reservasi::with(['pasien', 'dokter'])
+                ->where('dokter_id', $dokter->id)
+                ->orderBy('tanggal_reservasi')
+                ->orderBy('waktu_reservasi')
+                ->get();
+        } elseif ($menu === 'laporan') {
+            $pemeriksaan = \App\Models\Pemeriksaan::with(['dokter', 'pasien'])
+                ->where('dokter_id', $dokter->id)
+                ->orderBy('tanggal_pemeriksaan', 'desc')
+                ->get();
+        }
+        return view('dashboard.dokter', compact('menu', 'dokter', 'reservasi', 'pemeriksaan'));
     }
 }

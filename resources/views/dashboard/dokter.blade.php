@@ -107,6 +107,23 @@
         .sidebar { width: 100%; min-height: auto; position: static; }
         .main-content { margin-left: 0; padding: 1rem; }
     }
+
+    .btn-custom-green {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background 0.2s ease-in-out;
+    }
+
+    .btn-custom-green:hover {
+        background-color: #218838;
+        color: #fff;
+    }
+
 </style>
 
 <div class="sidebar">
@@ -119,8 +136,9 @@
         </div>
     </div>
     <div class="sidebar-menu">
-        <a>Jadwal</a>
-        <a>Masukkan Laporan</a>
+        <a href="{{ route('dashboard.dokter', ['menu' => 'home']) }}" class="{{ $menu == 'home' ? 'active' : '' }}">Dashboard</a>
+        <a href="{{ route('dashboard.dokter', ['menu' => 'jadwal']) }}" class="{{ $menu == 'jadwal' ? 'active' : '' }}">Jadwal</a>
+        <a href="{{ route('dashboard.dokter', ['menu' => 'laporan']) }}" class="{{ $menu == 'laporan' ? 'active' : '' }}">Masukkan Laporan</a>
     </div>
     <div class="sidebar-logout">
         <form action="{{ route('dokter.logout') }}" method="POST">
@@ -131,9 +149,152 @@
 </div>
 
 <div class="main-content">
-    {{-- Default page: Jadwal --}}
-    <h1 style="color:var(--telkomedika-red); font-size:2rem; font-weight:bold;">Jadwal Dokter</h1>
-    <p>Selamat datang di halaman jadwal. (Tampilkan tabel jadwal di sini)</p>
-    {{-- Tambahkan konten jadwal di sini --}}
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if($menu == 'home')
+        <h1 style="color:#E4002B;font-size:2rem;font-weight:bold;">Selamat Datang, {{ $dokter->nama }}!</h1>
+        <p style="font-size:1.1rem;color:#555;">Ini adalah dashboard dokter. Silakan pilih menu di samping untuk melihat jadwal atau mengelola laporan pemeriksaan.</p>
+    @elseif($menu == 'jadwal')
+        <h1 style="color:#E4002B;font-size:2rem;font-weight:bold;">Jadwal Reservasi</h1>
+        @if(!request('action'))
+            <form method="GET" style="display:inline;">
+                <input type="hidden" name="menu" value="jadwal">
+                <input type="hidden" name="action" value="tambah">
+                <button type="submit" class="btn-custom-green mb-3">+ Tambah Data</button>
+            </form>
+        @endif
+        @if(request('action') == 'tambah')
+            <form action="{{ route('reservasi.store') }}" method="POST" class="mb-4">
+                @csrf
+                <div class="mb-2">
+                    <label>Pasien</label>
+                    <input type="text" name="pasien_id" class="form-control" placeholder="ID Pasien" required>
+                </div>
+                <div class="mb-2">
+                    <label>Tanggal</label>
+                    <input type="date" name="tanggal_reservasi" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Waktu</label>
+                    <input type="time" name="waktu_reservasi" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-success">Simpan</button>
+            </form>
+        @endif
+        <div class="card"><div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Pasien</th>
+                        <th>Tanggal</th>
+                        <th>Waktu</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($reservasi as $key => $item)
+                    <tr>
+                        <td>{{ $key + 1 }}</td>
+                        <td>{{ $item->pasien->nama }}</td>
+                        <td>{{ \Carbon\Carbon::parse($item->tanggal_reservasi)->format('d/m/Y') }}</td>
+                        <td>{{ $item->waktu_reservasi }}</td>
+                        <td>
+                            <span class="badge {{ $item->status == 'selesai' ? 'bg-success' : 'bg-danger' }}">
+                                {{ $item->status }}
+                            </span>
+                        </td>
+                        <td>
+                            <form action="{{ route('reservasi.update', $item->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="status" value="{{ $item->status == 'selesai' ? 'pending' : 'selesai' }}">
+                                <button type="submit" class="btn btn-sm {{ $item->status == 'selesai' ? 'btn-warning' : 'btn-success' }}">
+                                    {{ $item->status == 'selesai' ? 'Batalkan Selesai' : 'Tandai Selesai' }}
+                                </button>
+                            </form>
+                            <form action="{{ route('reservasi.destroy', $item->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus reservasi ini?')">
+                                    Hapus
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center">Tidak ada jadwal reservasi</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        </div></div>
+    @elseif($menu == 'laporan')
+        <h1 style="color:#E4002B;font-size:2rem;font-weight:bold;">Data Pemeriksaan</h1>
+        @if(!request('action'))
+            <form method="GET" style="display:inline;">
+                <input type="hidden" name="menu" value="laporan">
+                <input type="hidden" name="action" value="tambah">
+                <button type="submit" class="btn-custom-green mb-3">+ Tambah Data</button>
+            </form>
+        @endif
+        @if(request('action') == 'tambah')
+            <form action="{{ route('dokter.pemeriksaan.store') }}" method="POST" class="mb-4">
+                @csrf
+                <div class="mb-2">
+                    <label>Pasien</label>
+                    <input type="text" name="pasien_id" class="form-control" placeholder="ID Pasien" required>
+                </div>
+                <div class="mb-2">
+                    <label>Tanggal Pemeriksaan</label>
+                    <input type="date" name="tanggal_pemeriksaan" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Diagnosa</label>
+                    <input type="text" name="diagnosa" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Catatan</label>
+                    <input type="text" name="catatan" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-success">Simpan</button>
+            </form>
+        @endif
+        <div class="card"><div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Pasien</th>
+                        <th>Tanggal Pemeriksaan</th>
+                        <th>Diagnosa</th>
+                        <th>Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($pemeriksaan as $key => $item)
+                    <tr>
+                        <td>{{ $key + 1 }}</td>
+                        <td>{{ $item->pasien->nama }}</td>
+                        <td>{{ \Carbon\Carbon::parse($item->tanggal_pemeriksaan)->format('d/m/Y') }}</td>
+                        <td>{{ $item->diagnosa }}</td>
+                        <td>{{ $item->catatan ?? '-' }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center">Tidak ada data pemeriksaan</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        </div></div>
+    @endif
 </div>
 @endsection

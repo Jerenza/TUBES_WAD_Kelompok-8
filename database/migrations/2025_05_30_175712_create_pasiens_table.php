@@ -13,9 +13,16 @@ return new class extends Migration
     {
         Schema::create('pasiens', function (Blueprint $table) {
             $table->id();
+            $table->string('nama');
+            $table->string('username')->unique();
+            $table->string('email')->nullable();
+            $table->string('password');
+            $table->string('role')->default('pasien');
             $table->timestamps();
         });
     }
+
+    public $timestamps = false;
 
     /**
      * Reverse the migrations.
